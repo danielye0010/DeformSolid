@@ -1,79 +1,34 @@
 # DeformSolid
 
-**3D Boolean editing and independent geometric validation under nonlinear deformation.**
+DeformSolid is a solid modeling course project for cutting and inspecting solids after nonlinear deformation. The demo starts with a four-hole component and compares cutting before deformation, cutting with a sphere fixed in space, and cutting with a tool that moves with the material.
 
-[Interactive 3D project](https://danielye.net/projects/deform-solid/) ·
-[Published project code in the portfolio repository](https://github.com/danielye0010/danielye0010.github.io/tree/master/_code/deform-solid)
+[Interactive 3D demo](https://danielye.net/projects/deform-solid/)
 
-A reference solid is represented by analytic CSG, mapped through a continuous
-piecewise-Q1 deformation, and edited in deformed coordinates. The project
-combines FE-aligned boundary construction, Manifold-based 3D Boolean operations,
-implicit queries with Newton inversion, cross-section extraction, and independent
-geometric comparisons. Its goal is reliable editing and inspection rather than
-a new Boolean kernel.
+![Original four-hole solid, nonlinear deformation, and spherical Boolean cut](https://danielye.net/projects/deform-solid/figures/workflow.png)
 
-## Main result: why FE alignment matters
+The application maps an analytic CSG solid through a piecewise trilinear (Q1) finite-element deformation. The boundary mesh follows element interfaces so it can represent changes in surface slope. Manifold computes the 3D differences. Damped Newton inversion evaluates the reference solid at deformed points and provides an independent check on the meshes and sections.
 
-Deformation gradients can jump at finite-element interfaces. Mapping a mesh
-edge across one of these interfaces without splitting it can miss a geometric
-kink and introduce an error that carries into the Boolean result.
+## Results
 
-| Grid cells per axis | Unsplit max sampled error | FE-aligned max sampled error |
-| ---: | ---: | ---: |
-| 7 | 2.897610e-2 | 4.028896e-3 |
-| 21 | 1.013866e-2 | 4.105835e-4 |
-| 49 | 4.403282e-3 | 8.978049e-5 |
-| 105 | 2.065682e-3 | 1.958339e-5 |
+| Test | Result |
+| --- | --- |
+| Boundary alignment, finest strong-deformation mesh | Maximum sampled surface error fell from 2.07 × 10⁻³ to 1.96 × 10⁻⁵, a 105× reduction with 3.75% more input triangles. |
+| Cut first vs. cut with the transported tool | Same continuous target. The fine meshes differed by 6.56 × 10⁻⁵ in sampled surface distance. The transported-tool output had absolute volume error 7.89 × 10⁻⁷. |
+| Section inspection | All 18 sections of the cut-order outputs kept four holes. In a separate small-hole case, coarse sampling found three holes and finer sampling recovered the fourth. |
+| Independent Boolean classification | 12 meshes, 49,636 point–mesh comparisons. All 4,214 definite disagreements were within about 1.89 × 10⁻⁴ of the mesh surface. |
+| Dense field queries, 2048² cells | Single-thread CPU medians were 0.8514 s in native C++ and 6.1203 s in Python (7.19× over five runs). |
 
-At the finest resolution, FE-aligned construction reduced sampled surface
-error **105.48×**, while increasing the input triangle count by **3.75%**.
-Observed convergence orders were **0.975** without alignment and **1.954**
-with alignment for the tested geometry and deformation.
+[FE alignment data](results/exp09/fe_alignment_convergence.csv) · [CPU benchmark data](results/native/) · [Cross-section comparison](https://danielye.net/projects/deform-solid/figures/cut_order_sections.pdf)
 
-The Exp09 validation compared **12 saved 3D Boolean meshes** with independent
-inverse-implicit geometry across **49,636** point–mesh comparisons. All
-**4,214** definite label differences were within **1.892468e-4** of the
-output mesh, and **120** representative independent checks passed. Four further
-Boolean outputs passed mesh checks and retained the four-hole sections.
+## Run the geometry example
 
-The standalone matched-input splitter also had six retained numerical seam
-failures with approximately 1e-13 gaps. The supported approach is the complete
-FE-aligned construction. These measurements are finite sampled results, not a
-general continuous Hausdorff or topology certificate.
-
-![Measured FE-aligned convergence](https://danielye.net/projects/deform-solid/figures/fe_alignment_convergence.svg)
-
-[Download the Exp09 convergence CSV](results/exp09/fe_alignment_convergence.csv)
-
-## Code and reproduction
-
-This repository includes the existing executable modeling source released
-through the portfolio site's `_code/deform-solid` directory. The Exp09
-experiment's standalone scripts have **not** been included in this public
-snapshot. The published Exp09 numerical summary is reproduced here and on
-the live project page.
+With Python 3.13 and an activated environment, run from the repository root:
 
 ```sh
-python -m venv .venv
-# Activate the environment first.
 python -m pip install -r requirements.txt
 python -B examples/build_geometry.py --output output
 ```
 
-The example exports deformed and Boolean mesh geometry, ordered cross sections,
-and measured results. Use a new output directory. The modeling release includes
-a native C++ batch evaluator; see `course_project/gpu/e1/INTERFACE.md` and
-`course_project/gpu/e1/CMakeLists.txt`.
+Use a new output directory. The example saves OBJ and PLY meshes, ordered cross-sections, and a `results.json` summary. The web viewer opens the saved meshes for interactive inspection.
 
-### Repository layout
-
-- `solid_modeling/` — reference CSG, FE deformation, boundary meshing, cross-sections
-- `experiments/` — selected established inverse/Boolean implementation modules
-- `solid-query/` — inverse-field and reference dependencies
-- `course_project/gpu/e1/` — native C++ CPU evaluator
-- `examples/` — executable geometry example
-- `results/` — existing native measurements and Exp09 published summary
-
-The published Boolean computations use Manifold, an established mesh-Boolean
-backend. The page's live WebGL model viewer uses saved meshes; it does not run
-the Python solver in the browser.
+The double-precision C++ evaluator uses a batch C interface. See the [build configuration](course_project/gpu/e1/CMakeLists.txt) and [batch interface](course_project/gpu/e1/INTERFACE.md). CUDA is planned.
