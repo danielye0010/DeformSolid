@@ -8,3 +8,4 @@ pymeshlab==2025.7.post1
 threadpoolctl==3.6.0
 shapely==2.2.0
 rtree==1.4.1
+networkx==3.5

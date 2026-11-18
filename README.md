@@ -31,4 +31,9 @@ python -B examples/build_geometry.py --output output
 
 Use a new output directory. The example saves OBJ and PLY meshes, ordered cross-sections, and a `results.json` summary. The web viewer opens the saved meshes for interactive inspection.
 
-The double-precision C++ evaluator uses a batch C interface. See the [build configuration](course_project/gpu/e1/CMakeLists.txt) and [batch interface](course_project/gpu/e1/INTERFACE.md). CUDA is planned.
+## Repository layout
+
+- `examples/build_geometry.py` is the application entry point. It uses the mesh assembly helpers in `course_project/application_geometry.py`.
+- `solid_modeling/` contains the solid, deformation, boundary meshing, and slicing code. `solid-query/` and selected modules under `experiments/` supply reused numerical routines and validation tools.
+- `course_project/gpu/e1/` contains the double-precision C++ CPU evaluator and its [batch interface](course_project/gpu/e1/INTERFACE.md).
+- `results/` contains archived FE-alignment and CPU measurements. The example regenerates the application meshes and sections. The full Exp09 comparison also requires the original Exp08 configurations and saved meshes, which are outside this distribution.
